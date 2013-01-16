@@ -91,7 +91,7 @@ key_info=(
   'Left'      "$terminfo[kcub1]"
   'Down'      "$terminfo[kcud1]"
   'Right'     "$terminfo[kcuf1]"
-  'BackTab'   "$terminfo[kcbt]"
+  # 'BackTab'   "$terminfo[kcbt]"
 )
 
 # Do not bind any keys if there are empty values in $key_info.
@@ -294,7 +294,7 @@ for keymap in 'emacs' 'viins'; do
     bindkey -M "$keymap" "$key" push-line-or-edit
 
   # Bind Shift + Tab to go to the previous menu item.
-  bindkey -M "$keymap" "$key_info[BackTab]" reverse-menu-complete
+  #bindkey -M "$keymap" "$key_info[BackTab]" reverse-menu-complete
 
   # Complete in the middle of word.
   bindkey -M "$keymap" "$key_info[Control]I" expand-or-complete

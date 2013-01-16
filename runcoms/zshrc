@@ -12,3 +12,69 @@ fi
 
 # Customize to your needs...
 
+function aapt {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/platform-tools/aapt.exe "$@"
+}
+function adb {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/platform-tools/aapt.exe "$@"
+}
+function aidl {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/platform-tools/aapt.exe "$@"
+}
+function dx {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/platform-tools/dx.bat "$@"
+}
+function android {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/android.bat "$@"
+}
+function emulator {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/emulator.exe "$@"
+}
+function hierarchyviewer {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/hierarchyviewer.bat "$@"
+}
+function layoutopt {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/layoutopt.bat "$@"
+}
+function mksdcard {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/mksdcard.exe "$@"
+}
+function monkeyrunner {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/monkeyrunner.bat "$@"
+}
+function retrace {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/proguard/bin/retrace.bat "$@"
+}
+function traceview {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/traceview.bat "$@"
+}
+function zipalign {
+    TOP=/cygdrive/c/Program\ Files\ \(x86\)/Android/android-sdk
+    "$TOP"/tools/zipalign.exe "$@"
+}
+alias j="jruby -S"
+
+alias mirah="j mirah"
+alias mirahc="j mirahc"
+alias pindah="j pindah"
+
+ulimit -c 0
+
+function sublime {
+    subl $(cygpath -w $1)
+}
+function sublimew {
+    subl -w $(cygpath -w $1)
+}

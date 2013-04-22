@@ -17,7 +17,20 @@ function +vi-git-status() {
 }
 
 function prompt_minimal_precmd {
+  prompt_minimal_is_ssh
   vcs_info
+}
+
+function prompt_minimal_is_ssh {
+	SESSION_TYPE=""
+	if [ -n "$SSH_CLIENT" ] || [ -n "$SSH_TTY" ]; then
+	  SESSION_TYPE="%F{yellow}%m%f "
+	# many other tests omitted
+	else
+	  case $(ps -o comm= -p $PPID) in
+	    sshd|*/sshd) SESSION_TYPE="%F{yellow}%m%f ";;
+	  esac
+	fi
 }
 
 function prompt_minimal_setup {
@@ -43,7 +56,7 @@ function prompt_minimal_setup {
   zstyle ':vcs_info:git*+set-message:*' hooks git-status
 
   # Define prompts.
-  PROMPT='%F{green}%2~%f${vcs_info_msg_0_} %F{cyan}»%f '
+  PROMPT='${SESSION_TYPE}%F{green}%2~%f${vcs_info_msg_0_} %F{cyan}»%f '
   RPROMPT=''
 }
 

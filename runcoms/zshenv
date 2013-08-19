@@ -80,6 +80,8 @@ path=(
   /usr/{bin,sbin}
   /{bin,sbin}
   $path
+  ~/bin
+  /usr/local/texlive/2013/bin/x86_64-linux
 )
 
 for path_file in /etc/paths.d/*(.N); do

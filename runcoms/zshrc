@@ -17,6 +17,7 @@ alias mirah="j mirah"
 alias pindah="j pindah"
 
 eval "$(hub alias -s)"
+compdef hub=git
 alias pbcopy='xclip -selection clipboard'
 alias pbpaste='xclip -selection clipboard -o'
 

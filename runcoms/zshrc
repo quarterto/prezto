@@ -11,14 +11,5 @@ if [[ -s "${ZDOTDIR:-$HOME}/.zprezto/init.zsh" ]]; then
 fi
 
 # Customize to your needs...
-
-alias j="jruby -S"
-alias mirah="j mirah"
-alias pindah="j pindah"
-
 eval "$(hub alias -s)"
 compdef hub=git
-alias pbcopy='xclip -selection clipboard'
-alias pbpaste='xclip -selection clipboard -o'
-
-export PATH=$PATH:~/.gem/ruby/2.0.0/bin:~/.rvm/bin

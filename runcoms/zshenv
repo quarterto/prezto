@@ -83,6 +83,7 @@ path=(
   $path
   ~/bin
   /usr/local/share/npm/bin
+  /Applications/git-annex.app/Contents/MacOS
 )
 
 for path_file in /etc/paths.d/*(.N); do

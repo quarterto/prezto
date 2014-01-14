@@ -10,7 +10,7 @@
 #
 
 # Check for the minimum supported version.
-min_zsh_version='4.3.10'
+min_zsh_version='4.3.11'
 if ! autoload -Uz is-at-least || ! is-at-least "$min_zsh_version"; then
   print "prezto: old shell detected, minimum required: $min_zsh_version" >&2
   return 1
@@ -25,7 +25,7 @@ unset min_zsh_version
 function pmodload {
   local -a pmodules
   local pmodule
-  local pfunction_glob='^([_.]*|prompt_*_setup|README*)(.N:t)'
+  local pfunction_glob='^([_.]*|prompt_*_setup|README*)(-.N:t)'
 
   # $argv is overridden in the anonymous function.
   pmodules=("$argv[@]")
@@ -47,7 +47,7 @@ function pmodload {
 
   # Load Prezto modules.
   for pmodule in "$pmodules[@]"; do
-    if zstyle -t ":prezto:module:$pmodule" loaded; then
+    if zstyle -t ":prezto:module:$pmodule" loaded 'yes' 'no'; then
       continue
     elif [[ ! -d "${ZDOTDIR:-$HOME}/.zprezto/modules/$pmodule" ]]; then
       print "$0: no such module: $pmodule" >&2

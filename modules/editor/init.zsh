@@ -4,42 +4,6 @@
 # Authors:
 #   Sorin Ionescu <sorin.ionescu@gmail.com>
 #
-# Usage:
-#   To enable key bindings, add the following to zpreztorc, and replace 'map'
-#   with 'emacs' or 'vi.
-#
-#     zstyle ':prezto:module:editor' keymap 'map'
-#
-#   To enable the auto conversion of .... to ../.., add the following to
-#   zpreztorc.
-#
-#     zstyle ':prezto:module:editor' dot-expansion 'yes'
-#
-#   To indicate when the editor is in the primary keymap (emacs or viins), add
-#   the following to your theme prompt setup function.
-#
-#     zstyle ':prezto:module:editor:keymap' primary '>>>'
-#
-#   To indicate when the editor is in the primary keymap (emacs or viins) insert
-#   mode, add the following to your theme prompt setup function.
-#
-#     zstyle ':prezto:module:editor:keymap:primary' insert 'I'
-#
-#   To indicate when the editor is in the primary keymap (emacs or viins)
-#   overwrite mode, add the following to your theme prompt setup function.
-#
-#     zstyle ':prezto:module:editor:keymap:primary' overwrite 'O'
-#
-#   To indicate when the editor is in the alternate keymap (vicmd), add the
-#   following to your theme prompt setup function.
-#
-#     zstyle ':prezto:module:editor:keymap' alternate '<<<'
-#
-#   To indicate when the editor is completing, add the following to your theme
-#   prompt setup function.
-#
-#     zstyle ':prezto:module:editor' completing '...'
-#
 
 # Return if requirements are not found.
 if [[ "$TERM" == 'dumb' ]]; then
@@ -53,13 +17,12 @@ fi
 # Beep on error in line editor.
 setopt BEEP
 
-# Allow command line editing in an external editor.
-autoload -Uz edit-command-line
-zle -N edit-command-line
-
 #
 # Variables
 #
+
+# Treat these characters as part of a word.
+WORDCHARS='*?_-.[]~&;!#$%^(){}<>'
 
 # Use human-friendly identifiers.
 zmodload zsh/terminfo
@@ -94,13 +57,21 @@ key_info=(
   # 'BackTab'   "$terminfo[kcbt]"
 )
 
-# Do not bind any keys if there are empty values in $key_info.
-for key in "$key_info[@]"; do
-  if [[ -z "$key" ]]; then
-    print "prezto: one or more keys are non-bindable" >&2
-    return 1
+# Set empty $key_info values to an invalid UTF-8 sequence to induce silent
+# bindkey failure.
+for key in "${(k)key_info[@]}"; do
+  if [[ -z "$key_info[$key]" ]]; then
+    key_info["$key"]='�'
   fi
 done
+
+#
+# External Editor
+#
+
+# Allow command line editing in an external editor.
+autoload -Uz edit-command-line
+zle -N edit-command-line
 
 #
 # Functions
@@ -114,17 +85,17 @@ function editor-info {
   typeset -gA editor_info
 
   if [[ "$KEYMAP" == 'vicmd' ]]; then
-    zstyle -s ':prezto:module:editor:keymap' alternate 'REPLY'
+    zstyle -s ':prezto:module:editor:info:keymap:alternate' format 'REPLY'
     editor_info[keymap]="$REPLY"
   else
-    zstyle -s ':prezto:module:editor:keymap' primary 'REPLY'
+    zstyle -s ':prezto:module:editor:info:keymap:primary' format 'REPLY'
     editor_info[keymap]="$REPLY"
 
     if [[ "$ZLE_STATE" == *overwrite* ]]; then
-      zstyle -s ':prezto:module:editor:keymap:primary' overwrite 'REPLY'
+      zstyle -s ':prezto:module:editor:info:keymap:primary:overwrite' format 'REPLY'
       editor_info[overwrite]="$REPLY"
     else
-      zstyle -s ':prezto:module:editor:keymap:primary' insert 'REPLY'
+      zstyle -s ':prezto:module:editor:info:keymap:primary:insert' format 'REPLY'
       editor_info[overwrite]="$REPLY"
     fi
   fi
@@ -137,12 +108,38 @@ function editor-info {
 zle -N editor-info
 
 # Updates editor information when the keymap changes.
-function zle-keymap-select zle-line-init zle-line-finish {
+function zle-keymap-select {
   zle editor-info
 }
 zle -N zle-keymap-select
-zle -N zle-line-finish
+
+# Enables terminal application mode and updates editor information.
+function zle-line-init {
+  # The terminal must be in application mode when ZLE is active for $terminfo
+  # values to be valid.
+  if (( $+terminfo[smkx] )); then
+    # Enable terminal application mode.
+    echoti smkx
+  fi
+
+  # Update editor information.
+  zle editor-info
+}
 zle -N zle-line-init
+
+# Disables terminal application mode and updates editor information.
+function zle-line-finish {
+  # The terminal must be in application mode when ZLE is active for $terminfo
+  # values to be valid.
+  if (( $+terminfo[rmkx] )); then
+    # Disable terminal application mode.
+    echoti rmkx
+  fi
+
+  # Update editor information.
+  zle editor-info
+}
+zle -N zle-line-finish
 
 # Toggles emacs overwrite mode and updates editor information.
 function overwrite-mode {
@@ -186,7 +183,7 @@ zle -N expand-dot-to-parent-directory-path
 # Displays an indicator when completing.
 function expand-or-complete-with-indicator {
   local indicator
-  zstyle -s ':prezto:module:editor' completing 'indicator'
+  zstyle -s ':prezto:module:editor:info:completing' format 'indicator'
   print -Pn "$indicator"
   zle expand-or-complete
   zle redisplay
@@ -254,10 +251,6 @@ bindkey -M vicmd "v" edit-command-line
 # Undo/Redo
 bindkey -M vicmd "u" undo
 bindkey -M vicmd "$key_info[Control]R" redo
-
-# Switch to command mode.
-bindkey -M viins "jk" vi-cmd-mode
-bindkey -M viins "kj" vi-cmd-mode
 
 if (( $+widgets[history-incremental-pattern-search-backward] )); then
   bindkey -M vicmd "?" history-incremental-pattern-search-backward
@@ -329,14 +322,14 @@ fi
 #
 
 # Set the key layout.
-zstyle -s ':prezto:module:editor' keymap 'keymap'
-if [[ "$keymap" == (emacs|) ]]; then
+zstyle -s ':prezto:module:editor' key-bindings 'key_bindings'
+if [[ "$key_bindings" == (emacs|) ]]; then
   bindkey -e
-elif [[ "$keymap" == vi ]]; then
+elif [[ "$key_bindings" == vi ]]; then
   bindkey -v
 else
-  print "prezto: invalid keymap: $keymap" >&2
+  print "prezto: editor: invalid key bindings: $key_bindings" >&2
 fi
 
-unset key{map,}
+unset key{,map,bindings}
 

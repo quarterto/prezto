@@ -2,104 +2,123 @@
 # Sets terminal window and tab titles.
 #
 # Authors:
-#   James Cox <james@imaj.es>
 #   Sorin Ionescu <sorin.ionescu@gmail.com>
 #
 
 # Return if requirements are not found.
-if [[ "$TERM" == 'dumb' ]]; then
+if [[ "$TERM" == (dumb|linux|*bsd*) ]]; then
   return 1
 fi
 
-# Set the GNU Screen window number.
-if [[ -n "$WINDOW" ]]; then
-  export SCREEN_NO="%B${WINDOW}%b "
-else
-  export SCREEN_NO=""
-fi
-
-# Sets the GNU Screen title.
-function set-screen-title {
-  if [[ "$TERM" == screen* ]]; then
-    printf "\ek%s\e\\" ${(V)argv}
-  fi
-}
-
-# Sets the terminal window title.
+# Sets the terminal or terminal multiplexer window title.
 function set-window-title {
-  if [[ "$TERM" == ((x|a|ml|dt|E)term*|(u|)rxvt*) ]]; then
-    printf "\e]2;%s\a" ${(V)argv}
+  local title_format{,ted}
+  zstyle -s ':prezto:module:terminal:window-title' format 'title_format' || title_format="%s"
+  zformat -f title_formatted "$title_format" "s:$argv"
+
+  if [[ "$TERM" == screen* ]]; then
+    title_format="\ek%s\e\\"
+  else
+    title_format="\e]2;%s\a"
   fi
+
+  printf "$title_format" "${(V%)title_formatted}"
 }
 
 # Sets the terminal tab title.
 function set-tab-title {
-  if [[ "$TERM" == ((x|a|ml|dt|E)term*|(u|)rxvt*) ]]; then
-    printf "\e]1;%s\a" ${(V)argv}
-  fi
+  local title_format{,ted}
+  zstyle -s ':prezto:module:terminal:tab-title' format 'title_format' || title_format="%s"
+  zformat -f title_formatted "$title_format" "s:$argv"
+
+  printf "\e]1;%s\a" ${(V%)title_formatted}
 }
 
-# Sets the tab and window titles with the command name.
-function set-title-by-command {
+# Sets the tab and window titles with a given command.
+function _terminal-set-titles-with-command {
   emulate -L zsh
-  setopt LOCAL_OPTIONS EXTENDED_GLOB
+  setopt EXTENDED_GLOB
 
   # Get the command name that is under job control.
-  if [[ "${1[(w)1]}" == (fg|%*)(\;|) ]]; then
+  if [[ "${2[(w)1]}" == (fg|%*)(\;|) ]]; then
     # Get the job name, and, if missing, set it to the default %+.
-    local job_name="${${1[(wr)%*(\;|)]}:-%+}"
+    local job_name="${${2[(wr)%*(\;|)]}:-%+}"
 
     # Make a local copy for use in the subshell.
     local -A jobtexts_from_parent_shell
     jobtexts_from_parent_shell=(${(kv)jobtexts})
 
-    jobs $job_name 2>/dev/null > >(
+    jobs "$job_name" 2>/dev/null > >(
       read index discarded
       # The index is already surrounded by brackets: [1].
-      set-title-by-command "${(e):-\$jobtexts_from_parent_shell$index}"
+      _terminal-set-titles-with-command "${(e):-\$jobtexts_from_parent_shell$index}"
     )
   else
     # Set the command name, or in the case of sudo or ssh, the next command.
-    local cmd=${1[(wr)^(*=*|sudo|ssh|-*)]}
+    local cmd="${${2[(wr)^(*=*|sudo|ssh|-*)]}:t}"
+    local truncated_cmd="${cmd/(#m)?(#c15,)/${MATCH[1,12]}...}"
+    unset MATCH
 
-    # Right-truncate the command name to 15 characters.
-    if (( $#cmd > 15 )); then
-      cmd="${cmd[1,15]}..."
-    fi
-
-    for kind in window tab screen; do
-      set-${kind}-title "$cmd"
-    done
+    set-window-title "$cmd"
+    set-tab-title "$truncated_cmd"
   fi
 }
 
-# Don't override precmd/preexec; append to hook array.
+# Sets the tab and window titles with a given path.
+function _terminal-set-titles-with-path {
+  emulate -L zsh
+  setopt EXTENDED_GLOB
+
+  local absolute_path="${${1:a}:-$PWD}"
+  local abbreviated_path="${absolute_path/#$HOME/~}"
+  local truncated_path="${abbreviated_path/(#m)?(#c15,)/...${MATCH[-12,-1]}}"
+  unset MATCH
+
+  set-window-title "$abbreviated_path"
+  set-tab-title "$truncated_path"
+}
+
+# Sets the Terminal.app proxy icon.
+function _terminal-set-terminal-app-proxy-icon {
+  printf '\e]7;%s\a' "file://$HOST${${1:-$PWD}// /%20}"
+}
+
+# Do not override precmd/preexec; append to the hook array.
 autoload -Uz add-zsh-hook
 
-# Sets the tab and window titles before the prompt is displayed.
-function set-title-precmd {
-  if zstyle -t ':prezto:module:terminal' auto-title; then
-    if [[ "$TERM_PROGRAM" == 'Apple_Terminal' && "$TERM" != screen* ]]; then
-      # Set the current working directory in Apple Terminal.
-      printf '\e]7;%s\a' "file://$HOST${PWD// /%20}"
-    else
-      set-window-title "${(%):-%~}"
-      for kind in tab screen; do
-        # Left-truncate the current working directory to 15 characters.
-        set-${kind}-title "${(%):-%15<...<%~%<<}"
-      done
-    fi
-  fi
-}
-add-zsh-hook precmd set-title-precmd
+# Set up the Apple Terminal.
+if [[ "$TERM_PROGRAM" == 'Apple_Terminal' ]] \
+  && ( ! [[ -n "$STY" || -n "$TMUX" || -n "$DVTM" ]] )
+then
+  # Sets the Terminal.app current working directory before the prompt is
+	# displayed.
+  add-zsh-hook precmd _terminal-set-terminal-app-proxy-icon
 
-# Sets the tab and window titles before command execution.
-function set-title-preexec {
-  if zstyle -t ':prezto:module:terminal' auto-title; then
-    if [[ "$TERM_PROGRAM" != 'Apple_Terminal' || "$TERM" == screen*  ]]; then
-      set-title-by-command "$2"
+	# Unsets the Terminal.app current working directory when a terminal
+	# multiplexer or remote connection is started since it can no longer be
+  # updated, and it becomes confusing when the directory displayed in the title
+  # bar is no longer synchronized with real current working directory.
+	function _terminal-unset-terminal-app-proxy-icon {
+    if [[ "${2[(w)1]:t}" == (screen|tmux|dvtm|ssh|mosh) ]]; then
+      _terminal-set-terminal-app-proxy-icon ' '
     fi
-  fi
-}
-add-zsh-hook preexec set-title-preexec
+	}
+	add-zsh-hook preexec _terminal-unset-terminal-app-proxy-icon
+
+  # Do not set the tab and window titles in Terminal.app since it sets the tab
+  # title to the currently running process by default and the current working
+  # directory is set separately.
+	return
+fi
+
+# Set up non-Apple terminals.
+if zstyle -t ':prezto:module:terminal' auto-title \
+  && ( ! [[ -n "$STY" || -n "$TMUX" ]] )
+then
+	# Sets the tab and window titles before the prompt is displayed.
+	add-zsh-hook precmd _terminal-set-titles-with-path
+
+	# Sets the tab and window titles before command execution.
+	add-zsh-hook preexec _terminal-set-titles-with-command
+fi
 

@@ -59,6 +59,7 @@ Aliases
 Functions
 ---------
 
+  - `ruby-app-root` displays the path to the Ruby application root directory.
   - `ruby-info` exposes information about the Ruby environment via the
     `$ruby_info` associative array.
 
@@ -66,13 +67,13 @@ Theming
 -------
 
 To display the name of the current Ruby version in a prompt, define the
-following style in the `prompt_theme_setup` function.
+following style in the `prompt_name_setup` function.
 
     # %v - ruby version.
-    zstyle ':prezto:module:ruby' version 'version:%v'
+    zstyle ':prezto:module:ruby:info:version' format 'version:%v'
 
 Then add `$ruby_info[version]` to `$PROMPT` or `$RPROMPT` and call
-`ruby-info` in the `prompt_theme_preexec` hook function.
+`ruby-info` in the `prompt_name_preexec` hook function.
 
 Authors
 -------

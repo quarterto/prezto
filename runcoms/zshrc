@@ -14,5 +14,7 @@ fi
 eval "$(hub alias -s)"
 compdef hub=git
 
+. <(npm completion)
+
 export PYTHONPATH=/usr/local/lib/python2.7/site-packages/
 eval "$(rbenv init -)"

@@ -14,6 +14,5 @@ fi
 eval "$(hub alias -s)"
 compdef hub=git
 
-PATH=$PATH:$HOME/.rvm/bin # Add RVM to PATH for scripting
 export PYTHONPATH=/usr/local/lib/python2.7/site-packages/
 eval "$(rbenv init -)"

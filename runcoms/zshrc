@@ -12,7 +12,7 @@ fi
 
 # Customize to your needs...
 eval "$(hub alias -s)"
-compdef hub=git
+# compdef hub=git
 
 . <(npm completion)
 

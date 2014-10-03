@@ -18,3 +18,4 @@ eval "$(hub alias -s)"
 
 export PYTHONPATH=/usr/local/lib/python2.7/site-packages/
 eval "$(rbenv init -)"
+eval "$(gulp --completion=zsh)"

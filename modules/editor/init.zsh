@@ -55,13 +55,15 @@ key_info=(
   'Down'      "$terminfo[kcud1]"
   'Right'     "$terminfo[kcuf1]"
   # 'BackTab'   "$terminfo[kcbt]"
+  'ControlLeft'  '\e[1;5D \e[5D \e\e[D \eOd'
+  'ControlRight' '\e[1;5C \e[5C \e\e[C \eOc'
 )
 
 # Set empty $key_info values to an invalid UTF-8 sequence to induce silent
 # bindkey failure.
 for key in "${(k)key_info[@]}"; do
   if [[ -z "$key_info[$key]" ]]; then
-    key_info["$key"]='�'
+    key_info[$key]='�'
   fi
 done
 
@@ -211,10 +213,10 @@ function tcsh-backward-delete-word {
 }
 zle -N tcsh-backward-delete-word
 
-for key ("$key_info[Escape]"{B,b}) bindkey -M emacs "$key" emacs-backward-word
-for key ("$key_info[Escape]"{F,f}) bindkey -M emacs "$key" emacs-forward-word
-bindkey -M emacs "$key_info[Escape]$key_info[Left]" emacs-backward-word
-bindkey -M emacs "$key_info[Escape]$key_info[Right]" emacs-forward-word
+for key in "$key_info[Escape]"{B,b} "${(s: :)key_info[ControlLeft]}"
+  bindkey -M emacs "$key" emacs-backward-word
+for key in "$key_info[Escape]"{F,f} "${(s: :)key_info[ControlRight]}"
+  bindkey -M emacs "$key" emacs-forward-word
 
 bindkey -M emacs "$key_info[Escape]d" tcsh-backward-delete-word
 
@@ -332,4 +334,3 @@ else
 fi
 
 unset key{,map,bindings}
-

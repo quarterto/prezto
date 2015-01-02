@@ -3,7 +3,7 @@ set -x -e
 
 pushd runcoms
 for f in z*; do
-    ln -s "$(pwd)/$f" ~/".$f"
+    ln -sf "$(pwd)/$f" ~/".$f"
 done
 popd
 

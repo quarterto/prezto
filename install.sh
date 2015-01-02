@@ -1,7 +1,11 @@
 #!/bin/bash
+set -x -e
 
-for f in runcoms/z*; do
-    ln -s "$f" "~/.$f"
+pushd runcoms
+for f in z*; do
+    ln -s "$(pwd)/$f" ~/".$f"
 done
+popd
 
+echo /usr/local/bin/zsh | sudo tee -a /etc/shells
 chsh -s /usr/local/bin/zsh

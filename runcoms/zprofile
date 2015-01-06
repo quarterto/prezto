@@ -46,6 +46,7 @@ path=(
   /usr/local/{bin,sbin}
   ~/bin
   ~/Library/Haskell/bin
+  /usr/local/Cellar/php55/5.5.20/bin
   $path
 )
 

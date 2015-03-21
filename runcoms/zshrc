@@ -18,4 +18,10 @@ eval "$(hub alias -s)"
 
 export PYTHONPATH=/usr/local/lib/python2.7/site-packages/
 eval "$(rbenv init -)"
-eval "$(gulp --completion=zsh)"
+
+function wmake() {
+	deps=$(make -nBd $@ | grep 'No need' | cut -d '`' -f 2 | cut -d "'" -f 1)
+	echo Watching: $(echo $deps | tr "\n" " ")
+	make $@
+	fswatch-run $deps "make $@"
+}

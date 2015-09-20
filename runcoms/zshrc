@@ -25,3 +25,5 @@ function wmake() {
 	make $@
 	fswatch-run $deps "make $@"
 }
+
+export NODE_REPL_HISTORY_FILE=~/.node_history
